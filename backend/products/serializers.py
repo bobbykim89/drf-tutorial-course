@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 from .models import Product
+from .validators import validate_title, unique_product_title, validate_title_no_hello
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -9,11 +10,14 @@ class ProductSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='product-detail', lookup_field='pk')
     # email = serializers.EmailField(write_only=True)
+    title = serializers.CharField(
+        validators=[unique_product_title, validate_title_no_hello])
 
     class Meta:
         model = Product
         fields = [
             'pk',
+            # 'user',
             'url',
             'edit_url',
             'title',
@@ -22,6 +26,15 @@ class ProductSerializer(serializers.ModelSerializer):
             'sale_price',
             'my_discount'
         ]
+
+    # def validate_title(self, value):
+    #     req = self.context.get('request')
+    #     user = req.user
+    #     qs = Product.objects.filter(user=user, title__iexact=value)
+    #     if qs.exists():
+    #         raise serializers.ValidationError(
+    #             f'{value} is already a product name.')
+    #     return value
 
     # def create(self, validated_data):
     #     email = validated_data.pop('email')
