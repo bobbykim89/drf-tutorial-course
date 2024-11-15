@@ -1,9 +1,14 @@
 const contentContainer = document.getElementById('content-container')
 const loginForm = document.getElementById('login-form')
+const searchForm = document.getElementById('search-form')
 const baseEndpoint = 'http://localhost:8000/api'
 if (loginForm) {
   // handle this login form
   loginForm.addEventListener('submit', handleLogin)
+}
+if (searchForm) {
+  // handle this search form
+  searchForm.addEventListener('submit', handleSearch)
 }
 
 function handleLogin(event) {
@@ -24,6 +29,33 @@ function handleLogin(event) {
       return response.json()
     })
     .then((authData) => handleAuthData(authData, getProductList))
+    .catch((err) => {
+      console.log('error', err)
+    })
+}
+
+function handleSearch(event) {
+  event.preventDefault()
+  let formData = new FormData(searchForm)
+  let data = Object.fromEntries(formData)
+  let searchParams = new URLSearchParams(data)
+  const endpoint = `${baseEndpoint}/search/?${searchParams}`
+  const headers = {
+    'Content-Type': 'application/json',
+  }
+  const authToken = localStorage.getItem('access')
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`
+  }
+  const options = {
+    method: 'GET',
+    headers: headers,
+  }
+  fetch(endpoint, options)
+    .then((response) => {
+      return response.json()
+    })
+    .then((data) => writeToContainer(data))
     .catch((err) => {
       console.log('error', err)
     })
@@ -93,3 +125,43 @@ function getProductList() {
 
 validateJWTToken()
 // getProductList()
+
+const searchClient = algoliasearch(
+  'UTHRT45T3Y',
+  '9a14ded65840c4114d3140e05d140e5e'
+)
+
+const search = instantsearch({
+  indexName: 'cfe_Product',
+  searchClient,
+})
+
+search.addWidgets([
+  instantsearch.widgets.searchBox({
+    container: '#search-box',
+  }),
+  instantsearch.widgets.clearRefinements({
+    container: '#clear-refinements',
+  }),
+  instantsearch.widgets.refinementList({
+    container: '#user-list',
+    attribute: 'user',
+  }),
+  instantsearch.widgets.refinementList({
+    container: '#public-list',
+    attribute: 'public',
+  }),
+  instantsearch.widgets.hits({
+    container: '#hits',
+    templates: {
+      item: `<div>
+                <div>{{#helpers.highlight}}{ "attribute": "title" }{{/helpers.highlight}}</div>
+                <div>{{#helpers.highlight}}{ "attribute": "body" }{{/helpers.highlight}}</div>
+                
+                <p>{{ user }}</p><p>\${{ price }}
+            </div>`,
+    },
+  }),
+])
+
+search.start()
