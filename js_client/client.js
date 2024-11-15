@@ -126,10 +126,7 @@ function getProductList() {
 validateJWTToken()
 // getProductList()
 
-const searchClient = algoliasearch(
-  'UTHRT45T3Y',
-  '9a14ded65840c4114d3140e05d140e5e'
-)
+const searchClient = algoliasearch('api_key', 'api_secret')
 
 const search = instantsearch({
   indexName: 'cfe_Product',
